@@ -7,3 +7,4 @@ selenium
 beautifulSoup4
 geopy
 streamlit-folium
+openpyxl
