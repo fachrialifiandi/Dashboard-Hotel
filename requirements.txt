@@ -1,0 +1,8 @@
+streamlit
+pandas
+plotly
+folium
+numpy
+selenium
+BeautifulSoup
+geopy
