@@ -4,5 +4,5 @@ plotly
 folium
 numpy
 selenium
-BeautifulSoup
+beautifulSoup4
 geopy
