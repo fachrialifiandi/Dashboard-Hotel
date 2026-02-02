@@ -6,8 +6,8 @@ from streamlit_folium import st_folium
 
 
 st.set_page_config(
-    page_title="Akomodasi GIS Dashboard",
-    page_icon="🗺️",
+    page_title="Sistem Dashboard Akomodasi Parawisata Bali",
+    page_icon="🏨",
     layout="wide"
 )
 
@@ -112,7 +112,7 @@ filtered_df = df.copy()
 
 if not filtered_df.empty:
     if selected_lokasi:
-        filtered_df = filtered_df[filtered_df['Lokasi'].isin(selected_lokasi)]
+        filtered_df = filtered_df[filtered_df['Wilayah'].isin(selected_lokasi)]
 
     if 'Harga' in filtered_df.columns:
         filtered_df = filtered_df[filtered_df['Harga'].between(
@@ -158,15 +158,21 @@ if not df.empty:
             avg_lon = filtered_df['Longitude'].mean()
             m = folium.Map(location=[avg_lat, avg_lon], zoom_start=11)
 
-            for _, row in filtered_df.iterrows():
+            for i, row in filtered_df.iterrows():
                 harga = row.get('Harga', 0)
                 color = 'green' if harga < 1000000 else 'orange' if harga < 3000000 else 'red'
                 harga_fmt = f"{harga:,.0f}".replace(",", ".")
 
+                maps_url = f"https://www.google.com/maps/search/?api=1&query={row['Latitude']},{row['Longitude']}"
                 popup_html = f"""
-                <b>{row['Nama Akomodasi']}</b><br>
-                Rp {harga_fmt}<br>
-                Rating: {row['Rating']}
+                <div style="width:200px">
+                    <b>{row['Nama Akomodasi']}</b><br>
+                    💰 Rp {harga_fmt}<br>
+                    ⭐ Rating: {row['Rating']}<br><br>
+                    <a href="{maps_url}" target="_blank" style="text-decoration:none; color:blue;">
+                        📍 <b>Buka di Google Maps</b>
+                    </a>
+                </div>
                 """
 
                 folium.Marker(
