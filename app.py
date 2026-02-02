@@ -2,8 +2,9 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import folium
+import math
 from streamlit_folium import st_folium
-
+from folium.plugins import MarkerCluster
 
 st.set_page_config(
     page_title="Sistem Dashboard Akomodasi Parawisata Bali",
@@ -154,16 +155,49 @@ if not df.empty:
 
     with tab1:
         if not filtered_df.empty:
+            
             avg_lat = filtered_df['Latitude'].mean()
             avg_lon = filtered_df['Longitude'].mean()
             m = folium.Map(location=[avg_lat, avg_lon], zoom_start=11)
+            
+            
+            marker_cluster = MarkerCluster().add_to(m)
+
+            koordinat_counts = filtered_df.groupby(['Latitude', 'Longitude']).size().to_dict()
+            
+            
+            tracker = {} 
 
             for i, row in filtered_df.iterrows():
+                lat_asli = row['Latitude']
+                lon_asli = row['Longitude']
+                coord_key = (lat_asli, lon_asli)
+
+  
+                count = koordinat_counts.get(coord_key, 1)
+
+                if count > 1:                    
+                    current_count = tracker.get(coord_key, 0)
+                    tracker[coord_key] = current_count + 1
+                    
+                    angle = current_count * 55
+                    distance = 0.00015 * (1 + current_count // 5)
+                    
+                    offset_lat = distance * math.cos(math.radians(angle))
+                    offset_lon = distance * math.sin(math.radians(angle))
+                    
+                    final_lat = lat_asli + offset_lat
+                    final_lon = lon_asli + offset_lon
+                else:
+                    final_lat = lat_asli
+                    final_lon = lon_asli
+
                 harga = row.get('Harga', 0)
                 color = 'green' if harga < 1000000 else 'orange' if harga < 3000000 else 'red'
                 harga_fmt = f"{harga:,.0f}".replace(",", ".")
-
-                maps_url = f"https://www.google.com/maps/search/?api=1&query={row['Latitude']},{row['Longitude']}"
+                
+                maps_url = f"https://www.google.com/maps/search/?api=1&query={lat_asli},{lon_asli}"
+                
                 popup_html = f"""
                 <div style="width:200px">
                     <b>{row['Nama Akomodasi']}</b><br>
@@ -176,14 +210,15 @@ if not df.empty:
                 """
 
                 folium.Marker(
-                    [row['Latitude'], row['Longitude']],
-                    popup=folium.Popup(popup_html, max_width=200),
+                    [final_lat, final_lon],
+                    popup=folium.Popup(popup_html, max_width=250),
                     tooltip=row['Nama Akomodasi'],
                     icon=folium.Icon(color=color, icon="bed", prefix="fa")
-                ).add_to(m)
+                ).add_to(marker_cluster)
 
-            st_folium(m, use_container_width=True, height=500)
+            st_folium(m, use_container_width=True, height=500, returned_objects=[])
             st.caption("🟢 < 500rb |🟠 500rb - 1.5jt | 🔴 > 1.5jt")
+        
         else:
             st.warning("Tidak ada data yang sesuai filter.")
 
